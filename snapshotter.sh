@@ -26,17 +26,18 @@ mount_device() {
 
 exec_config() {
 	local MOUNT_DIR="$(mktemp -d)"
+	local time="$(date "+%Y.%m.%d-%H.%M.%S")"
 
 	while read line; do
 		if [[ "${line:0:1}" == "-" ]]; then
 			[[ $is_mounted == 0 ]] && continue
-			local path="${line:1}"
-			echo "PATH: $path"
+			local subvolume="${line:1}"
+			local sv_path="$MOUNT_DIR/$subvolume"
+			local sn_path="$MOUNT_DIR/$SNAPSHOTS_PATH/$time/$subvolume"
+			mkdir -p "$MOUNT_DIR/$SNAPSHOTS_PATH/$time/$(dirname "$subvolume")"
+			btrfs subvolume snapshot "$sv_path" "$sn_path"
 		else
 			mount_device "$line"
-			[[ $is_mounted == 0 ]] && continue
-			echo "DEVICE: $line"
-			ls "$MOUNT_DIR"
 		fi
 	done < "$CONFIG"
 
